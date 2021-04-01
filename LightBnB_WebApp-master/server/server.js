@@ -7,6 +7,8 @@ const path = require('path');
 const express = require('express');
 const cookieSession = require('cookie-session');
 const bodyParser = require('body-parser');
+const nodemon = require('nodemon');
+const morgan = require('morgan');
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.use(cookieSession({
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+// app.use(nodemon);  
+app.use(morgan('dev'));
 
 // /api/endpoints
 const apiRouter = express.Router();
