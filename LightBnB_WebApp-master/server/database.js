@@ -164,14 +164,69 @@ const getAllProperties = function(options, limit = 10) {
   // }
   // return Promise.resolve(limitedProperties);
   
-  const queryString = `
-    SELECT *
+  let queryParams = []; 
+  
+  let queryString = `
+    SELECT properties.id, properties.title, cost_per_night, AVG(property_reviews.rating) as average_rating
     FROM properties
-    LIMIT $1;
+    JOIN property_reviews ON property_reviews.property_id = properties.id WHERE TRUE `;
+
+    // if ((options.city) || (options.owner_id) || (options.minimum_price_per_night && options.maximum_price_per_night)) {
+    //   // console.log("TEST VEGETABLE", Object.values(options));
+    //   queryString += ` WHERE `;
+    // }
+    
+    
+    if (options.city) {
+      queryParams.push(`%${options.city}%`);
+      queryString += ` AND city LIKE $${queryParams.length} `;
+    }
+
+    if (options.owner_id) {
+      queryParams.push(`%${options.owner_id}%`);
+      queryString += ` AND properties.owner_id = $${queryParams.length} `;
+    }
+
+    if (options.minimum_price_per_night && options.maximum_price_per_night) {
+      
+      queryParams.push(`${options.minimum_price_per_night}`);
+      queryParams.push(`${options.maximum_price_per_night}`);
+      queryString += ` AND cost_per_night > $${queryParams.length -1} 
+      AND cost_per_night < $${queryParams.length} `;
+      
+    }
+    
+    
+    queryString += ` GROUP BY properties.id`;
+
+    if (options.minimum_rating) {
+      queryParams.push(`${options.minimum_rating}`);
+      queryString += ` HAVING AVG(property_reviews.rating) > $${queryParams.length}`
+    }
+
+    queryParams.push(limit);
+    queryString += ` ORDER BY cost_per_night
+    LIMIT $${queryParams.length};
   `;
 
-  return Promise.resolve(pool.query(queryString, [limit])
-    .then(res => res.rows));
+  console.log("TEST CODE BROCCOLI:", queryString, queryParams);
+
+  /* MY QUERY CODE
+  WHERE city = 'Vancouver'
+  GROUP BY properties.id, properties.title, cost_per_night
+  HAVING AVG(property_reviews.rating) > 4
+  ORDER BY cost_per_night ASC
+  LIMIT 10
+  */
+  // Promise.resolve
+
+  return (pool.query(queryString, queryParams) //, [limit]
+    .then(res => {
+      // console.log("success");
+      return res.rows;
+    })
+    .catch(res => {console.log("FATAL ERROR:", res)})
+    );
 }
 exports.getAllProperties = getAllProperties;
 
