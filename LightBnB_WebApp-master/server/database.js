@@ -19,6 +19,7 @@ const pool = new Pool({
  */
 const getUserWithEmail = function(email) {
   console.log("test email code:", email);
+  /*
   // // ORIGINAL JSON CODE
   // let user;
   // for (const userId in users) {
@@ -31,6 +32,7 @@ const getUserWithEmail = function(email) {
   // }
   // console.log("FORMAT TEST: user JSON", user)
   // return Promise.resolve(user);
+  */
 
   const queryString = `
     SELECT *
@@ -82,10 +84,12 @@ exports.getUserWithId = getUserWithId;
 const addUser =  function(user) {
   console.log("******USER CODE******", user);
   // // ORIGINAL JSON CODE
+  /*
   // const userId = Object.keys(users).length + 1;
   // user.id = userId;
   // users[userId] = user;
   // return Promise.resolve(user);
+  */
 
   const queryString = `
     INSERT INTO users (
@@ -118,7 +122,29 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+  //ORIGINAL JSON CODE
+  // return getAllProperties(null, 2);
+  const queryString = `
+    SELECT properties.*, reservations.*, AVG(property_reviews.rating) as average_rating
+    FROM users
+    JOIN reservations ON reservations.guest_id = users.id
+    JOIN properties ON reservations.property_id = properties.id
+    JOIN property_reviews ON reservations.property_id = property_reviews.property_id
+    WHERE users.id = $1 AND end_date < now()::date
+    GROUP BY reservations.id, properties.id
+    ORDER BY start_date ASC
+    LIMIT 10
+  `;
+  const values = [guest_id]
+  return Promise.resolve(pool.query(queryString, values)
+    .then(res => {
+      // console.log(res.rows);
+      return res.rows;
+    })
+    .catch(res => {
+      console.log("FATAL ERROR OCCURED, sorry about that", res)
+    })
+    );
 }
 exports.getAllReservations = getAllReservations;
 
