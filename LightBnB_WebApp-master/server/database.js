@@ -18,6 +18,7 @@ const pool = new Pool({
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithEmail = function(email) {
+  console.log("test email code:", email);
   // // ORIGINAL JSON CODE
   // let user;
   // for (const userId in users) {
@@ -28,6 +29,7 @@ const getUserWithEmail = function(email) {
   //     user = null;
   //   }
   // }
+  // console.log("FORMAT TEST: user JSON", user)
   // return Promise.resolve(user);
 
   const queryString = `
@@ -38,7 +40,15 @@ const getUserWithEmail = function(email) {
   `;
 
   return Promise.resolve(pool.query(queryString, [email])
-    .then(res => res.rows));
+    .then(res => {
+      // console.log('success?', res.rows[0]);
+      return res.rows[0];
+    })
+    .catch(res => {
+      console.log("FATAL ERROR: get user with email", res)
+    })
+    );
+    
 }
 exports.getUserWithEmail = getUserWithEmail;
 
@@ -59,7 +69,7 @@ const getUserWithId = function(id) {
   `;
 
   return Promise.resolve(pool.query(queryString, [id])
-    .then(res => res.rows));
+    .then(res => res.rows[0]));
 }
 exports.getUserWithId = getUserWithId;
 
